@@ -1,11 +1,15 @@
 using Abstraction.Commands;
+using Abstractions.Queries;
 using Application.Commands.Menus;
 using Application.Commands.Menus.Handlers;
+using Application.DTOs;
 using Application.Interfaces;
+using Application.Mappings;
+using Application.Queries.Menus;
+using Application.Queries.Menus.Handlers;
 using Domain.Entities;
 using Infrastructure.Dispatchers;
 using Infrastructure.Persistence;
-using Infrastructure.Persistence.Repository;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -28,6 +32,11 @@ builder.Services.AddScoped<ICommandHandler<UpdateMenuCommand>, UpdateMenuCommand
 builder.Services.AddScoped<ICommandHandler<RemoveMenuCommand>, RemoveMenuCommandHandler>();
 
 builder.Services.AddScoped<ICommandDispatcher, CommanDispatcher>();
+builder.Services.AddAutoMapper(cfg => { }, typeof(MapperProfile).Assembly);
+
+builder.Services.AddScoped<IQueryHandler<GetAllMenusQuery, IEnumerable<MenuDto>>, GetAllMenusQueryHandler>();
+builder.Services.AddScoped<IQueryHandler<GetMenuByIdQuery, MenuDto>, GetMenuByIdHandler>();
+builder.Services.AddScoped<IQueryDispatcher, QueryDispatcher>();
 
 var app = builder.Build();
 

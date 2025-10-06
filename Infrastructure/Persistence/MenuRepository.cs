@@ -7,7 +7,7 @@ using Application.Interfaces;
 using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace Infrastructure.Persistence.Repository
+namespace Infrastructure.Persistence
 {
     public class MenuRepository : IRepository<Menu>
     {
@@ -24,24 +24,20 @@ namespace Infrastructure.Persistence.Repository
             await _dbContext.SaveChangesAsync();
         }
 
-        public async Task DeleteAsync(int id)
+        public async Task DeleteAsync(Menu entity)
         {
-            var entity = await _dbContext.Menu.FindAsync(id);
-            if (entity != null)
-            {
-                _dbContext.Menu.Remove(entity);
-                await _dbContext.SaveChangesAsync();
-            }
+            _dbContext.Menu.Remove(entity);
+            await _dbContext.SaveChangesAsync();
         }
 
         public async Task<IEnumerable<Menu>> GetAllAsync()
         {
-            return await _dbContext.Menu.ToListAsync();
+            return await _dbContext.Menu.Include(m => m.News).ToListAsync();
         }
 
         public async Task<Menu> GetByIdAsync(int id)
         {
-            return await _dbContext.Menu.FindAsync();
+            return await _dbContext.Menu.Include(m => m.News).FirstOrDefaultAsync(m => m.Id == id);
         }
 
         public async Task UpdateAsync(Menu entity)

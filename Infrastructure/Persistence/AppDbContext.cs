@@ -38,7 +38,7 @@ public partial class AppDbContext : DbContext
 
             entity.HasOne(d => d.Menu).WithMany(p => p.News)
                 .HasForeignKey(d => d.MenuId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("FK_Menu_News");
         });
 

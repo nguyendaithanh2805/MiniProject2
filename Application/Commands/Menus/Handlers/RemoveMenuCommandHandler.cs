@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Abstraction.Commands;
+using Application.Exceptions;
 using Application.Interfaces;
 using Domain.Entities;
 
@@ -20,7 +21,11 @@ namespace Application.Commands.Menus.Handlers
 
         public async Task HandleAsync(RemoveMenuCommand command)
         {
-            await _repository.DeleteAsync(command.Id);
+            var menu = await _repository.GetByIdAsync(command.Id);
+            if (menu is null)
+                throw new NotFoundException($"Menu not found with Id {command.Id}");
+
+            await _repository.DeleteAsync(menu);
         }
     }
 }
