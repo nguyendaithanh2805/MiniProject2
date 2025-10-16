@@ -1,10 +1,9 @@
-﻿using Abstraction.Commands;
-using Abstractions.Queries;
-using Api.ApiResponses;
-using Application.Commands.Menus;
+﻿using Api.ApiResponses;
+using Application.Commands;
 using Application.DTOs;
 using Application.Exceptions;
-using Application.Queries.Menus;
+using Application.Queries;
+using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -14,13 +13,11 @@ namespace Api.Controllers
     [ApiController]
     public class MenuController : ControllerBase
     {
-        private readonly ICommandDispatcher _commandDispatcher;
-        private readonly IQueryDispatcher _queryDispatcher;
+        private readonly IMediator _mediator;
 
-        public MenuController(ICommandDispatcher commandDispatcher, IQueryDispatcher queryDispatcher)
+        public MenuController(IMediator mediator)
         {
-            _commandDispatcher = commandDispatcher;
-            _queryDispatcher = queryDispatcher;
+            _mediator = mediator;
         }
 
         [HttpGet]
@@ -29,7 +26,7 @@ namespace Api.Controllers
             try
             {
                 return Ok(new ApiResponse<IEnumerable<MenuDto>>(true, "Get all menus successfully",
-                    await _queryDispatcher.QueryAsync(new GetAllMenusQuery())));
+                    await _mediator.Send(new GetAllMenusQuery())));
             }
             catch (Exception ex)
             {
@@ -43,7 +40,7 @@ namespace Api.Controllers
             try
             {
                 return Ok(new ApiResponse<MenuDto>(true, "Get menu successfully",
-                    await _queryDispatcher.QueryAsync(new GetMenuByIdQuery(id))));
+                    await _mediator.Send(new GetMenuByIdQuery(id))));
             }
             catch (Exception ex)
             {
@@ -56,7 +53,7 @@ namespace Api.Controllers
         {
             try
             {
-                await _commandDispatcher.SendAsync(command);
+                await _mediator.Send(command);
                 return Ok(new ApiResponse<string>(true, "Menu created successfully", null));
             }
             catch (Exception ex)
@@ -73,7 +70,7 @@ namespace Api.Controllers
                 if (id != command.Id)
                     return BadRequest("Id in route and body must match.");
 
-                await _commandDispatcher.SendAsync(command);
+                await _mediator.Send(command);
                 return Ok(new ApiResponse<string>(true, "Menu updated successfully.", null));
             }
             catch (NotFoundException ex)
@@ -92,7 +89,7 @@ namespace Api.Controllers
             try
             {
                 var command = new RemoveMenuCommand { Id = id };
-                await _commandDispatcher.SendAsync(command);
+                await _mediator.Send(command);
                 return Ok(new ApiResponse<string>(true, $"Menu with id {id} has been deleted successfully.", null));
             }
             catch (Exception ex)

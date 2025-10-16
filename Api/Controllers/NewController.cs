@@ -1,12 +1,9 @@
-﻿using Abstraction.Commands;
-using Abstractions.Queries;
-using Api.ApiResponses;
-using Application.Commands.Menus;
-using Application.Commands.News;
+﻿using Api.ApiResponses;
+using Application.Commands;
 using Application.DTOs;
 using Application.Exceptions;
-using Application.Queries.Menus;
-using Application.Queries.News;
+using Application.Queries;
+using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -16,13 +13,11 @@ namespace Api.Controllers
     [ApiController]
     public class NewController : ControllerBase
     {
-        private readonly IQueryDispatcher _queryDispatcher;
-        private readonly ICommandDispatcher _commandDispatcher;
+        private readonly IMediator _mediator;
 
-        public NewController(IQueryDispatcher queryDispatcher, ICommandDispatcher commandDispatcher)
+        public NewController(IMediator mediator)
         {
-            _queryDispatcher = queryDispatcher;
-            _commandDispatcher = commandDispatcher;
+            _mediator = mediator;
         }
 
         [HttpGet]
@@ -31,7 +26,7 @@ namespace Api.Controllers
             try
             {
                 return Ok(new ApiResponse<IEnumerable<NewsDto>>(true, "Get all news successfully",
-                    await _queryDispatcher.QueryAsync(new GetAllNewsQuery())));
+                    await _mediator.Send(new GetAllNewsQuery())));
             }
             catch (Exception ex)
             {
@@ -45,7 +40,7 @@ namespace Api.Controllers
             try
             {
                 return Ok(new ApiResponse<NewsDto>(true, "Get new successfully",
-                    await _queryDispatcher.QueryAsync(new GetNewByIdQuery(id))));
+                    await _mediator.Send(new GetNewByIdQuery(id))));
             }
             catch (Exception ex)
             {
@@ -58,7 +53,7 @@ namespace Api.Controllers
         {
             try
             {
-                await _commandDispatcher.SendAsync(command);
+                await _mediator.Send(command);
                 return Ok(new ApiResponse<string>(true, "New created successfully", null));
             }
             catch (Exception ex)
@@ -75,7 +70,7 @@ namespace Api.Controllers
                 if (id != command.Id)
                     return BadRequest("Id in route and body must match.");
 
-                await _commandDispatcher.SendAsync(command);
+                await _mediator.Send(command);
                 return Ok(new ApiResponse<string>(true, "New updated successfully.", null));
             }
             catch (NotFoundException ex)
@@ -93,8 +88,8 @@ namespace Api.Controllers
         {
             try
             {
-                var command = new RemoveNewCommand(id);
-                await _commandDispatcher.SendAsync(command);
+                var command = new RemoveNewCommand { Id = id };
+                await _mediator.Send(command);
                 return Ok(new ApiResponse<string>(true, $"New with id {id} has been deleted successfully.", null));
             }
             catch (Exception ex)
